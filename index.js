@@ -1,3 +1,11 @@
+// var http = require('http');
+// http.createServer(function (req, res) {
+//   res.writeHead(200, {'Content-Type': 'text/plain'});
+//   res.end('Hello World\n');
+// }).listen(8000, '127.0.0.1');
+// console.log('Server running at http://127.0.0.1:8000/');
+
+
 var connect = require('connect');
 var login = require('./login');
 
@@ -10,12 +18,14 @@ app.use(connect.query()); // Parse query string into `request.query`
 
 app.use('/', main);
 
+
+
 function main(request, response, next) {
 	switch (request.method) {
 		case 'GET': get(request, response); break;
 		case 'POST': post(request, response); break;
 		case 'DELETE': del(request, response); break;
-		case 'PUT': post(request, response); break;
+		case 'PUT': put(request, response); break;
 	}
 };
 
@@ -40,21 +50,36 @@ function post(request, response) {
 	// var newSessionId = login.login('xxx', 'xxx@gmail.com');
 	// TODO: set new session id to the 'session_id' cookie in the response
 	// replace "Logged In" response with response.end(login.hello(newSessionId));
+	var cookies = request.cookies;
+	var namereq = request.body.name;
+	var emailreq = request.body.email;
+	var newSessionId = login.login(namereq , emailreq);
+	var session_id = cookies['session_id'];
+	response.setHeader('Set-Cookie' , 'session_id=' + newSessionId);
 
-	response.end("Logged In\n");
+	response.end(login.hello(newSessionId));
 };
 
 function del(request, response) {
 	console.log("DELETE:: Logout from the server");
  	// TODO: remove session id via login.logout(xxx)
  	// No need to set session id in the response cookies since you just logged out!
-
-  	response.end('Logged out from the server\n');
+ 	var cookies = request.cookies;
+ 	console.log(cookies);
+ 	var sid = cookies['session_id'];
+ 	response.end(login.logout(sid));
 };
 
 function put(request, response) {
 	console.log("PUT:: Re-generate new seesion_id for the same user");
 	// TODO: refresh session id; similar to the post() function
+	var cookies = request.cookies;
+	var session_id = cookies['session_id'];
+	var namereq = request.body.name;
+	var emailreq = request.body.email;
+	var refreshedSessionId = login.login(namereq , emailreq);
+	
+	response.setHeader('Set-Cookie' , 'session_id=' + refreshedSessionId);
 
 	response.end("Re-freshed session id\n");
 };
